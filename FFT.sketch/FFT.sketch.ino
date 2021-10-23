@@ -12,7 +12,7 @@
 
 #define AUDIO A0
 #define XRES 64
-#define THRESH 12
+#define THRESH 3
 
 //SendOnlySoftwareSerial mySerialSend(3);  // Tx pin
 //ReceiveOnlySoftwareSerial mySerialRecv(8);
