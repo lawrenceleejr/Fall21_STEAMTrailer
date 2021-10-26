@@ -1,18 +1,14 @@
-// Arduino Serial Example #1 Remote Control Blink - Slave
+// *** Light Controller for UTK Fall 21 STEAM Trailer ***
+//
+// This arduino receives an 8-bit char on a collection
+// of digital input serial lines. Each line corresponds
+// to a specific frequency band power. Then each number
+// can be used to tell the NeoPixel LEDs to light up.
 
-
-//#include <SoftwareSerial.h>
 #include <ReceiveOnlySoftwareSerial.h>
-
 #include <Adafruit_NeoPixel.h>
 
-// software serial #1: RX = digital pin 10, TX = digital pin 11
-
-//SoftwareSerial portOne(10, 11);
-
 #define NSERIAL 7
-
-//ReceiveOnlySoftwareSerial serialPorts[NSERIAL];
 
 ReceiveOnlySoftwareSerial serialPorts[NSERIAL] = {
   ReceiveOnlySoftwareSerial(8),
@@ -44,9 +40,6 @@ uint32_t colors[NSERIAL] = {
   lights[0].Color(87,117,144),
 };
 
-//serialPorts[0] = ReceiveOnlySoftwareSerial(10);
-//ReceiveOnlySoftwareSerial serial1(10);
-
 char c  = ' ';
 byte LED = 13;
 
@@ -54,54 +47,58 @@ char value[NSERIAL];
 
 unsigned long startedWaiting = millis();
 
-void setup() 
+void setup()
 {
 
-
   pinMode(LED, OUTPUT);
-  
+
   Serial.begin(9600);
   //  while (!Serial) {
   //    ; // wait for serial port to connect. Needed for Native USB only
   //  }
-  
+
+  // Initialize each LED strip. Turn them on one at a time.
   for (int i=0; i<NSERIAL; i++){
-  
     Serial.print("fft");
     Serial.print(",");
-    
+
     serialPorts[i].begin(9600);
-    
+
     lights[i].begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
     lights[i].show();            // Turn OFF all pixels ASAP
-//    lights[i].setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
 
     colors[i] = lights[i].gamma32(colors[i]);
     lights[i].fill(colors[i],0,50);
     lights[i].show();
     delay(50);
   }
-  
+
   Serial.print("-1");
   Serial.println();
 
+  // Blink the on-board LED to signify that the setup function is over.
   digitalWrite(LED, HIGH); delay(100); digitalWrite(LED, LOW);delay(50);
   digitalWrite(LED, HIGH); delay(100); digitalWrite(LED, LOW);delay(50);
+  // Sleep for 1000ms = 1s
   delay(1000);
+  // Turn off all LEDs.
   for (int i=0;i<NSERIAL; i++){
     lights[i].setBrightness(0);
     lights[i].show();
   }
+  // Double blink on-board LED again
   digitalWrite(LED, HIGH); delay(100); digitalWrite(LED, LOW);delay(50);
   digitalWrite(LED, HIGH); delay(100); digitalWrite(LED, LOW);delay(50);
 
 }
- 
- 
+
+
 void loop()
 {
+  // Loop over serial connections and read them in turn.
+  // Slow because software serial port can only be listened
+  // to one at a time.
   for (int i=0; i<NSERIAL; i++){
-//    value[i]=0;
     serialPorts[i].listen();
     startedWaiting = millis();
     while(!serialPorts[i].available() && millis() - startedWaiting <= 500){}
@@ -110,15 +107,15 @@ void loop()
         char c = serialPorts[i].read();
         if(float(c)>0) value[i] = c;
         else value[i]=float(0);
-//        if (c=='1') { digitalWrite(LED, HIGH); delay(10); digitalWrite(LED, LOW); }
      } else {
       value[i] = float(value[i])-1;
       if(value[i]<0) value[i]=0;
      }
   }
 
-  
-  for(int i=0; i<NSERIAL; i++)  
+  // By here, I've read in a new value for all the lights.
+  // Let's write those values as brightnesses to the LEDs
+  for(int i=0; i<NSERIAL; i++)
   {
     int tempValue = 2*(float)value[i];
     Serial.print(tempValue);
@@ -129,5 +126,4 @@ void loop()
   Serial.print("-1");
   Serial.println();
 
- 
 }
