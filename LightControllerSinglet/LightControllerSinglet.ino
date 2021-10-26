@@ -33,11 +33,25 @@ unsigned long startedWaiting = millis();
 
 void setup()
 {
+  // This refers to the USB connection
+  Serial.begin(9600);
+  //  while (!Serial) {
+  //    ; // wait for serial port to connect. Needed for Native USB only
+  //  }
+  delay(100);
+
+  // This refers to the pin 0/1 serial connection
+  Serial1.begin(9600);
+
+  delay(100);
 
   pinMode(LED, OUTPUT);
 
+  pinMode(12, OUTPUT);
+  digitalWrite(12,HIGH);
+
   // Color configuration pins
-  // Connect one of these bins to ground to select its color
+  // Connect one of these pins to pin 12 to select its color
   pinMode(3, INPUT);
   pinMode(4, INPUT);
   pinMode(5, INPUT);
@@ -47,20 +61,11 @@ void setup()
   pinMode(9, INPUT);
 
   for (int i=0; i<7; i++){
+    Serial.println(digitalRead(i+3) );
     if( digitalRead(i+3) ){chosenColor=i; break;}
   }
 
-  // This refers to the USB connection
-  Serial.begin(9600);
-  //  while (!Serial) {
-  //    ; // wait for serial port to connect. Needed for Native USB only
-  //  }
-
-  // This refers to the pin 0/1 serial connection
-  Serial1.begin(9600);
-
   // Initialize each LED strip. Turn them on one at a time.
-  Serial.println(chosenColor);
   Serial.print("fft");
   Serial.print(",");
 
@@ -100,8 +105,14 @@ void loop()
 
   if (Serial1.available()){
     char c = Serial1.read();
-    if(float(c)>0) value[0] = c;
-    else value[0]=float(0);
+    if(float(c)>0) {
+      value[0] = c;
+      digitalWrite(LED, HIGH);
+    }
+    else{
+      value[0]=float(0);
+      digitalWrite(LED, LOW);
+    }
   } else {
     value[0] = float(value[0])-1;
     if(value[0]<0) value[0]=0;
