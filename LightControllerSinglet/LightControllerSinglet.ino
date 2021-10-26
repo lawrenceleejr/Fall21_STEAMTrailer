@@ -60,6 +60,7 @@ void setup()
   Serial1.begin(9600);
 
   // Initialize each LED strip. Turn them on one at a time.
+  Serial.println(chosenColor);
   Serial.print("fft");
   Serial.print(",");
 
