@@ -9,8 +9,10 @@
 #define NSERIAL 1
 
 Adafruit_NeoPixel lights[NSERIAL] = {
-  Adafruit_NeoPixel(50,2,NEO_GRB+ NEO_KHZ800)
+  Adafruit_NeoPixel(300,2,NEO_GRB+ NEO_KHZ800)
 };
+
+#define WHICHCOLOR 6
 
 uint32_t colors[7] = {
   lights[0].Color(249,65,68),
@@ -22,7 +24,7 @@ uint32_t colors[7] = {
   lights[0].Color(87,117,144),
 };
 
-uint32_t chosenColor = 0;
+uint32_t chosenColor = WHICHCOLOR;
 
 char c  = ' ';
 byte LED = 13;
@@ -62,8 +64,9 @@ void setup()
 
   for (int i=0; i<7; i++){
     Serial.println(digitalRead(i+3) );
-    if( digitalRead(i+3) ){chosenColor=i; break;}
+    if( digitalRead(i+3)==HIGH ){chosenColor=i; break;}
   }
+  Serial.println(WHICHCOLOR);
 
   // Initialize each LED strip. Turn them on one at a time.
   Serial.print("fft");
@@ -72,8 +75,8 @@ void setup()
   lights[0].begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
   lights[0].show();            // Turn OFF all pixels ASAP
 
-  colors[chosenColor] = lights[0].gamma32(colors[chosenColor]);
-  lights[0].fill(colors[chosenColor],0,50);
+  colors[WHICHCOLOR] = lights[0].gamma32(colors[WHICHCOLOR]);
+  lights[0].fill(colors[WHICHCOLOR],0,300);
   lights[0].show();
   delay(50);
 
@@ -88,7 +91,9 @@ void setup()
   delay(1000);
 
   // Turn off all LEDs.
-  lights[0].setBrightness(0);
+//  lights[0].setBrightness(0);
+  lights[0].fill(0,0,300);
+
   lights[0].show();
 
   // Double blink on-board LED again
@@ -100,6 +105,12 @@ void setup()
 
 void loop()
 {
+
+//  for (int i=0; i<7; i++){
+//    Serial.println(digitalRead(i+3) );
+//    if( digitalRead(i+3)==HIGH ){chosenColor=i; break;}
+//  }
+
   startedWaiting = millis();
   while(!Serial1.available() && millis() - startedWaiting <= 500){}
 
@@ -123,6 +134,7 @@ void loop()
   int tempValue = 2*(float)value[0];
   Serial.print(tempValue);
   Serial.print(",");
+  lights[0].fill(colors[WHICHCOLOR],0,300);
   lights[0].setBrightness(tempValue);
   lights[0].show();
 
