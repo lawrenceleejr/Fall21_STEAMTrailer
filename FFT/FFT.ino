@@ -20,16 +20,22 @@
 #define AUDIO A0 //This is where the input pin is defined
 #define XRES 64
 #define THRESH 3
-#define NSERIAL 7 // This is the number of output frequency bands
+#define NOUTPUTS 7 // This is the number of output frequency bands
+
+#define SMOOTH 10
 
 byte greenLED = 12;
 
 char im[SAMPLES];
 char data[SAMPLES];
 float barht[SAMPLES];
-float output[NSERIAL];
+float output[NOUTPUTS];
 
-SendOnlySoftwareSerial serialPorts[NSERIAL] = {
+float outputHistory[NOUTPUTS][SMOOTH+1];
+float averageOutput[NOUTPUTS];
+
+
+SendOnlySoftwareSerial serialPorts[NOUTPUTS] = {
   SendOnlySoftwareSerial(2),
   SendOnlySoftwareSerial(3),
   SendOnlySoftwareSerial(4),
@@ -57,7 +63,7 @@ void setup()
   Serial.print("audio");
   Serial.println();
 
-  for (int i=0; i<NSERIAL; i++){
+  for (int i=0; i<NOUTPUTS; i++){
     serialPorts[i].begin(9600);
   }
 }
@@ -99,9 +105,22 @@ void loop()
   output[5] = mergeBins(33,50,barht);
   output[6] = mergeBins(51,64,barht);
 
+  if(SMOOTH){
+    for(int iOut; iOut<NOUTPUTS; iOut++){
+      averageOutput[iOut] = 0;
+      for(int iHistory=0; iHistory<SMOOTH-1; i++){
+        outputHistory[iOut][SMOOTH-iHistory-1] = outputHistory[iOut][SMOOTH-iHistory-2];
+        averageOutput[iOut] += outputHistory[iOut][SMOOTH-iHistory-1];
+      }
+      outputHistory[iOut][0] = output[iOut];
+      averageOutput[iOut] /= (SMOOTH+1);
+    }
+  }
+
   digitalWrite(LED_BUILTIN, HIGH);
-  for (int i=0; i<NSERIAL; i++){
-    serialPorts[i].write(output[i]);
+  for (int i=0; i<NOUTPUTS; i++){
+    if(SMOOTH==0) serialPorts[i].write(output[i]);
+    else serialPorts[i].write(averageOutput[i]);
     Serial.print(output[i]);
     Serial.print(",");
   }
