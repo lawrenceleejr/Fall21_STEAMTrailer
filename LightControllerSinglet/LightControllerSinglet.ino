@@ -7,12 +7,11 @@
 #include <Adafruit_NeoPixel.h>
 
 #define NSERIAL 1
+#define SMOOTH 5
 
 Adafruit_NeoPixel lights[NSERIAL] = {
   Adafruit_NeoPixel(300,2,NEO_GRB+ NEO_KHZ800)
 };
-
-#define WHICHCOLOR 6
 
 uint32_t colors[7] = {
   lights[0].Color(249,65,68),
@@ -24,7 +23,9 @@ uint32_t colors[7] = {
   lights[0].Color(87,117,144),
 };
 
-uint32_t chosenColor = WHICHCOLOR;
+#define WHICHCOLOR 6
+
+uint32_t chosenColor = 0;
 
 char c  = ' ';
 byte LED = 13;
@@ -32,6 +33,10 @@ byte LED = 13;
 char value[NSERIAL];
 
 unsigned long startedWaiting = millis();
+
+float outputHistory[SMOOTH+1];
+float averageOutput;
+
 
 void setup()
 {
@@ -75,10 +80,6 @@ void setup()
   lights[0].begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
   lights[0].show();            // Turn OFF all pixels ASAP
 
-  colors[WHICHCOLOR] = lights[0].gamma32(colors[WHICHCOLOR]);
-  lights[0].fill(colors[WHICHCOLOR],0,300);
-  lights[0].show();
-  delay(50);
 
   Serial.print("-1");
   Serial.println();
@@ -86,6 +87,22 @@ void setup()
   // Blink the on-board LED to signify that the setup function is over.
   digitalWrite(LED, HIGH); delay(100); digitalWrite(LED, LOW);delay(50);
   digitalWrite(LED, HIGH); delay(100); digitalWrite(LED, LOW);delay(50);
+  
+
+  colors[WHICHCOLOR] = lights[0].gamma32(colors[WHICHCOLOR]);
+  lights[0].fill(colors[WHICHCOLOR],0,300);
+  lights[0].show();
+  delay(200);
+  lights[0].fill(0,0,300);
+  lights[0].show();
+  delay(100);
+  lights[0].fill(colors[WHICHCOLOR],0,300);
+  lights[0].show();
+  delay(200);
+  lights[0].fill(0,0,300);
+  lights[0].show();
+  delay(100);
+
 
   // Sleep for 1000ms = 1s
   delay(1000);
@@ -105,14 +122,15 @@ void setup()
 
 void loop()
 {
-
+  
 //  for (int i=0; i<7; i++){
 //    Serial.println(digitalRead(i+3) );
 //    if( digitalRead(i+3)==HIGH ){chosenColor=i; break;}
 //  }
-
+  
   startedWaiting = millis();
-  while(!Serial1.available() && millis() - startedWaiting <= 500){}
+  while(!Serial1.available() && millis() - startedWaiting <= 500000){}
+//  while(!Serial1.available() && millis() - startedWaiting <= 500){}
 
   if (Serial1.available()){
     char c = Serial1.read();
@@ -120,14 +138,32 @@ void loop()
       value[0] = c;
       digitalWrite(LED, HIGH);
     }
+    else if (float(c)<0){
+      value[0] = -c;
+      digitalWrite(LED, HIGH);
+    }
     else{
       value[0]=float(0);
       digitalWrite(LED, LOW);
     }
   } else {
-    value[0] = float(value[0])-1;
-    if(value[0]<0) value[0]=0;
+//    value[0] = float(value[0])-1;
+//    if(value[0]<0) value[0]=0;
   }
+
+
+  if(SMOOTH>0){
+      averageOutput = 0;
+      for(int iHistory=0; iHistory<SMOOTH-1; iHistory++){
+        outputHistory[SMOOTH-iHistory-1] = outputHistory[SMOOTH-iHistory-2];
+        averageOutput += outputHistory[SMOOTH-iHistory-1];
+      }
+      outputHistory[0] = value[0];
+      averageOutput += value[0];
+      averageOutput /= (SMOOTH+1);
+      value[0] = averageOutput;
+  }
+
 
   // By here, I've read in a new value for the light.
   // Let's write those values as brightnesses to the LEDs

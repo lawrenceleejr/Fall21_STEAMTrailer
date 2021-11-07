@@ -23,7 +23,7 @@
 #define OUTPUTTHRESH 20
 #define NOUTPUTS 7 // This is the number of output frequency bands
 
-#define SMOOTH 0
+#define SMOOTH 10
 
 char im[SAMPLES];
 char data[SAMPLES];
@@ -107,7 +107,7 @@ void loop()
   if(SMOOTH>0){
     for(int iOut; iOut<NOUTPUTS; iOut++){
       averageOutput[iOut] = 0;
-      for(int iHistory=0; iHistory<SMOOTH-1; i++){
+      for(int iHistory=0; iHistory<SMOOTH-1; iHistory++){
         outputHistory[iOut][SMOOTH-iHistory-1] = outputHistory[iOut][SMOOTH-iHistory-2];
         averageOutput[iOut] += outputHistory[iOut][SMOOTH-iHistory-1];
       }
@@ -127,7 +127,7 @@ void loop()
     else output[i]=0;
     if(output[i]<0) output[i]=0;
     serialPorts[i].write(output[i]);
-    Serial.print(output[i]);
+    Serial.print(output[i] );
     Serial.print(",");
   }
   Serial.println(val/100.);
