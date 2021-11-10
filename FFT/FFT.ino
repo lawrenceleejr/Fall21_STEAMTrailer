@@ -23,7 +23,7 @@
 #define OUTPUTTHRESH 20
 #define NOUTPUTS 7 // This is the number of output frequency bands
 
-#define SMOOTH 10
+#define SMOOTH 0
 
 char im[SAMPLES];
 char data[SAMPLES];
